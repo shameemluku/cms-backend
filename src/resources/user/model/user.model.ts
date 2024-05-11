@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema(
       flow_id: { type: String, default: null },
       config_ids: { type: Array, default: null },
     },
+    details: { type: mongoose.Schema.Types.ObjectId, ref: "user-details" },
   },
   {
     timestamps: true,

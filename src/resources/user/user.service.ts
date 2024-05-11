@@ -39,7 +39,50 @@ class UserService {
 
   public async getUserDetailsById(id: string): Promise<any> {
     const objectId = new mongoose.Types.ObjectId(id);
-    return await this.dbDetails.getById(objectId, { noErr: true });
+    return await this.dbDetails.getOneByQuery(
+      { user_id: objectId },
+      { noErr: true }
+    );
+  }
+
+  public async getAllUsers(): Promise<any> {
+    // return await this.db.getByQuery(
+    //   {},
+    //   { noErr: true, populateQuery: "details" }
+    // );
+    return await this.db.aggregate([
+      {
+        $lookup: {
+          from: "user-details",
+          foreignField: "user_id",
+          localField: "_id",
+          as: "userDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$userDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $sort: { _id: -1 },
+      },
+      {
+        $project:{
+          email:1,
+          role:1,
+          first_name:"$userDetails.first_name",
+          last_name:"$userDetails.last_name",
+          address:"$userDetails.address",
+          gender:"$userDetails.gender",
+          education_details:"$userDetails.education_details",
+          pro_details:"$userDetails.pro_details",
+          id_proof_upload:"$userDetails.id_proof_upload",
+          job_verification_doc:"$userDetails.job_verification_doc",
+        }
+      }
+    ]);
   }
 }
 

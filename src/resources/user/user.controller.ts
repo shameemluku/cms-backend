@@ -7,7 +7,9 @@ import validator from "./user.validation";
 import BcryptUtils from "@/utils/bcryptUtils";
 import JwtUtils from "@/utils/jwtUtils";
 import { CONSTANTS } from "./../../constants";
-import authMiddleware from "@/middlewares/auth.middleware";
+import authMiddleware, {
+  authAdminMiddleware,
+} from "@/middlewares/auth.middleware";
 import FormService from "../form/form.service";
 import { FieldDocument } from "../form/models/field.model";
 import S3Service from "@/services/s3.service";
@@ -33,6 +35,7 @@ class UserController implements Controller {
     );
     this.router.post(`/login`, validator.LoginUserValidation, ctrl.loginUser);
     this.router.get(`/verify`, ctrl.verifyUserToken);
+    this.router.get(`/logout`, ctrl.logoutUser);
 
     this.router.use(authMiddleware);
 
@@ -45,14 +48,14 @@ class UserController implements Controller {
     this.router.get(
       `/get-user-details`,
       validator.validateUserId,
-      ctrl.updateUserDetails
+      ctrl.getUserDetails
     );
 
-    this.router.get(
-      `/get-user-doc`,
-      validator.validateDocKey,
-      ctrl.getUserDoc
-    );
+    // Following Routes are accessbile for admin
+    this.router.use(authAdminMiddleware);
+
+    this.router.get(`/get-all-users`, ctrl.getAllUserDetails);
+    this.router.get(`/get-user-doc`, validator.validateDocKey, ctrl.getUserDoc);
   }
 
   private getControllerInstance() {
@@ -85,7 +88,10 @@ class UserController implements Controller {
             },
           });
           delete user.password;
-          const token = JwtUtils.signToken({ userId: user._id }, "1h");
+          const token = JwtUtils.signToken(
+            { userId: user._id, role: user.role },
+            "3h"
+          );
           res.cookie("token", token, {
             httpOnly: true,
             // secure: true, // Uncomment this line if you're using HTTPS
@@ -129,7 +135,10 @@ class UserController implements Controller {
             );
           }
           delete user.password;
-          const token = JwtUtils.signToken({ userId: user._id }, "1h");
+          const token = JwtUtils.signToken(
+            { userId: user._id, role: user.role },
+            "3h"
+          );
           res.cookie("token", token, {
             secure: process.env.ENVIRONMENT !== "local",
             maxAge: 24 * 60 * 60 * 1000,
@@ -143,6 +152,24 @@ class UserController implements Controller {
           });
         } catch (error) {
           console.log(error);
+          return next(
+            new HttpException(
+              httpStatus.INTERNAL_SERVER_ERROR,
+              "Internal Server Error"
+            )
+          );
+        }
+      },
+
+      async logoutUser(req: Request, res: Response, next: NextFunction) {
+        try {
+          res.clearCookie("token");
+          return res.json({
+            status: true,
+            message: "Logged out successfully",
+          });
+        } catch (error) {
+          console.error(error);
           return next(
             new HttpException(
               httpStatus.INTERNAL_SERVER_ERROR,
@@ -255,6 +282,25 @@ class UserController implements Controller {
             status: true,
             message: "User details fetched!",
             data: userDetails,
+          });
+        } catch (error) {
+          console.log(error);
+          return next(
+            new HttpException(
+              httpStatus.INTERNAL_SERVER_ERROR,
+              "Internal Server Error"
+            )
+          );
+        }
+      },
+
+      async getAllUserDetails(req: Request, res: Response, next: NextFunction) {
+        try {
+          const users = await UserService.getAllUsers();
+          return res.json({
+            status: true,
+            message: "User details fetched!",
+            data: users,
           });
         } catch (error) {
           console.log(error);

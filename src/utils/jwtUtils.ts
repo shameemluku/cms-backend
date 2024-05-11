@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 
 interface JwtPayload {
   userId: string;
+  role: number;
 }
 
 class JwtUtils {

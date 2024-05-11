@@ -28,7 +28,7 @@ const detailsSchema: Schema<IUserDetails> = new Schema({
   pro_details: [proDetailsSchema],
   id_proof_upload: { type: String, default: null },
   job_verification_doc: { type: String, default: null },
-  user_id: { type: Schema.Types.ObjectId, ref: "User", default: null },
+  user_id: { type: Schema.Types.ObjectId, ref: "users", default: null },
 });
 
 const UserDetailsModel = model<IUserDetails>("user-details", detailsSchema);
