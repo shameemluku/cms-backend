@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "module": "commonjs",
+    //  "rootDir": "./",
+    "resolveJsonModule": true, /* in case you are importing JSON files */
+    "outDir": "build",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true, /* Disallow inconsistently-cased references to the same file. */
+    "strict": true,
+    "noImplicitAny": true,
+    "skipLibCheck": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@/resources/*": [
+        "resources/*"
+      ],
+      "@/config/*": [
+        "config/*"
+      ],
+      "@/utils/*": [
+        "utils/*"
+      ],
+      "@/middlewares/*": [
+        "middlewares/*"
+      ],
+      "@/services/*": [
+        "services/*"
+      ]
+    },
+  },
+  "exclude": [
+    "node_modules",
+    "__tests__",
+    "jest.config.ts"
+  ]
+}
