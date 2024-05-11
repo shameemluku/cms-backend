@@ -121,7 +121,12 @@ class FormController implements Controller {
               data,
             });
           } else {
-            throw new Error("Invalid parent_id type");
+            return next(
+              new HttpException(
+                httpStatus.BAD_GATEWAY,
+                "Invalid parent_id type"
+              )
+            );
           }
         } catch (error) {
           console.log(error);

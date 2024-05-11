@@ -11,6 +11,7 @@ import authMiddleware from "@/middlewares/auth.middleware";
 import FormService from "../form/form.service";
 import { FieldDocument } from "../form/models/field.model";
 import S3Service from "@/services/s3.service";
+import { getExtentionFromBase64 } from "@/utils/others";
 
 class UserController implements Controller {
   constructor(
@@ -39,6 +40,18 @@ class UserController implements Controller {
       `/update-user-details`,
       validator.userDetailsValidation,
       ctrl.updateUserDetails
+    );
+
+    this.router.get(
+      `/get-user-details`,
+      validator.validateUserId,
+      ctrl.updateUserDetails
+    );
+
+    this.router.get(
+      `/get-user-doc`,
+      validator.validateDocKey,
+      ctrl.getUserDoc
     );
   }
 
@@ -185,24 +198,32 @@ class UserController implements Controller {
         try {
           const { id_proof_upload, job_verification_doc, user_id } = req.body;
 
+          let key_id = `id_proof_upload_${user_id}.${getExtentionFromBase64(
+            id_proof_upload
+          )}`;
+
+          let key_job = `job_verification_doc_${user_id}.${getExtentionFromBase64(
+            id_proof_upload
+          )}`;
+
           await Promise.all([
             s3Service.uploadBase64Image(
               id_proof_upload,
               process.env.AWS_BUCKET || "",
-              `id_proof_upload_${user_id}`
+              key_id
             ),
             s3Service.uploadBase64Image(
               job_verification_doc,
               process.env.AWS_BUCKET || "",
-              `job_verification_doc_${user_id}`
+              key_job
             ),
           ]);
 
           // Update user details with the S3 URLs
           const userDetails = await UserService.updateUserDetails({
             ...req.body,
-            id_proof_upload: `id_proof_upload_${user_id}`,
-            job_verification_doc: `job_verification_doc_${user_id}`,
+            id_proof_upload: key_id,
+            job_verification_doc: key_job,
           });
 
           return res.json({
@@ -210,6 +231,61 @@ class UserController implements Controller {
             message: "User details updated!",
             data: userDetails,
           });
+        } catch (error) {
+          console.log(error);
+          return next(
+            new HttpException(
+              httpStatus.INTERNAL_SERVER_ERROR,
+              "Internal Server Error"
+            )
+          );
+        }
+      },
+
+      async getUserDetails(req: Request, res: Response, next: NextFunction) {
+        try {
+          const { user_id } = req.query;
+          if (typeof user_id !== "string") {
+            return next(
+              new HttpException(httpStatus.BAD_GATEWAY, "Invalid user_id")
+            );
+          }
+          const userDetails = await UserService.getUserDetailsById(user_id);
+          return res.json({
+            status: true,
+            message: "User details fetched!",
+            data: userDetails,
+          });
+        } catch (error) {
+          console.log(error);
+          return next(
+            new HttpException(
+              httpStatus.INTERNAL_SERVER_ERROR,
+              "Internal Server Error"
+            )
+          );
+        }
+      },
+
+      async getUserDoc(req: Request, res: Response, next: NextFunction) {
+        try {
+          const { key } = req.query;
+          if (typeof key !== "string") {
+            return next(
+              new HttpException(httpStatus.BAD_GATEWAY, "Invalid key type")
+            );
+          }
+
+          let response = await s3Service.getS3File(
+            key,
+            process.env.AWS_BUCKET || ""
+          );
+
+          res.setHeader("Content-Disposition", `attachment; filename=${key}`);
+          res.setHeader("Content-Type", response?.ContentType);
+          return res.send(
+            Buffer.from(response.Body.toString("base64"), "base64")
+          );
         } catch (error) {
           console.log(error);
           return next(

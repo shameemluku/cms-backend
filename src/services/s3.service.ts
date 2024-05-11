@@ -25,7 +25,8 @@ class S3Service {
     fileName: string
   ): Promise<string> {
     try {
-      const imageBuffer = Buffer.from(base64Image, "base64");
+      let base64 = base64Image.replace(/^data:.+;base64,/, "");
+      const imageBuffer = Buffer.from(base64, "base64");
 
       const params: AWS.S3.PutObjectRequest = {
         Bucket: bucketName,
@@ -39,6 +40,21 @@ class S3Service {
     } catch (error) {
       console.error("Error uploading image to S3:", error);
       throw error;
+    }
+  }
+
+  public async getS3File(fileKey: string, bucket: string): Promise<any> {
+    try {
+      const data = await this.s3
+        .getObject({
+          Key: fileKey,
+          Bucket: bucket,
+        })
+        .promise();
+
+      return data;
+    } catch (err) {
+      return err;
     }
   }
 }

@@ -47,10 +47,23 @@ const userDetailsValidation = celebrate({
 });
 
 
+const validateUserId = celebrate({
+  query: Joi.object({
+    user_id: Joi.string().required(),
+  }),
+});
+
+const validateDocKey = celebrate({
+  query: Joi.object({
+    key: Joi.string().required(),
+  }),
+});
 
 
 export default {
   createUserValidation,
   LoginUserValidation,
   userDetailsValidation,
+  validateUserId,
+  validateDocKey
 };

@@ -36,6 +36,11 @@ class UserService {
       return await newData.save();
     }
   }
+
+  public async getUserDetailsById(id: string): Promise<any> {
+    const objectId = new mongoose.Types.ObjectId(id);
+    return await this.dbDetails.getById(objectId, { noErr: true });
+  }
 }
 
 export default UserService;
