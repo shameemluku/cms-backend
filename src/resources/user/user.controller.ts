@@ -79,7 +79,7 @@ class UserController implements Controller {
           let user: any = await UserService.createUser({
             email,
             password: hashedPassword,
-            role: CONSTANTS.USER_ROLES.ADMIN,
+            role: CONSTANTS.USER_ROLES.END_USER,
             config: {
               flow_id: form_flow?.flow_id || null,
               config_ids: form_fields?.map((item: FieldDocument) => {
@@ -95,7 +95,7 @@ class UserController implements Controller {
           res.cookie("token", token, {
             httpOnly: true,
             // secure: true, // Uncomment this line if you're using HTTPS
-            maxAge: 3600000, // 1 hour expiration
+            maxAge: 3600000, // 3 hour expiration
           });
           return res.json({
             status: true,

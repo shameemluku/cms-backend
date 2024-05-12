@@ -6,6 +6,7 @@ import FormService from "./form.service";
 import validator from "./from.validation";
 import authMiddleware from "@/middlewares/auth.middleware";
 import UserService from "../user/user.service";
+import { CONSTANTS } from "./../../constants";
 
 class FormController implements Controller {
   constructor(
@@ -91,8 +92,12 @@ class FormController implements Controller {
       async getFormConfig(req: Request, res: Response, next: NextFunction) {
         try {
           const user = await userService.getUserById(req.decodedToken?.userId);
+          user;
           const { flow_id, config_ids } = user?.config;
-          const data = await formService.getLatestConfig(flow_id, config_ids);
+          const data = await formService.getLatestConfig(
+            user?.role === CONSTANTS.USER_ROLES.ADMIN ? null : flow_id,
+            config_ids
+          );
 
           res.json({
             status: true,
